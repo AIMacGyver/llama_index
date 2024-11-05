@@ -2,7 +2,6 @@ import os
 import pytest
 from dotenv import load_dotenv
 
-# Load environment variables from .env if available
 load_dotenv()
 
 try:
