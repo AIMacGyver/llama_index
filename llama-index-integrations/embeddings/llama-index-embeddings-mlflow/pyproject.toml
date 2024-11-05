@@ -14,7 +14,7 @@ contains_example = true
 import_path = "llama_index.embeddings.mlflow"
 
 [tool.llamahub.class_authors]
-MLFlowEmbeddings = "robert-annand"
+MLFlowEmbedding = "robert-annand"
 
 [tool.mypy]
 disallow_untyped_defs = true
@@ -47,6 +47,7 @@ pre-commit = "3.2.0"
 pylint = "2.15.10"
 pytest = "7.2.1"
 pytest-mock = "3.11.1"
+python-dotenv = "^1.0.1"
 ruff = "0.0.292"
 tree-sitter-languages = "^1.8.0"
 types-Deprecated = ">=0.1.0"
