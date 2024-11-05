@@ -1,5 +1,5 @@
 from enum import Enum
 
 
-class CloudProvider(Enum):
+class MLPlatform(Enum):
     DATABRICKS = "databricks"

@@ -4,9 +4,9 @@ import os
 import logging
 from typing import Any, List, Dict, Optional
 
-from llama_index.core.bridge.pydantic import Field, PrivateAttr
+from llama_index.core.bridge.pydantic import Field
 from llama_index.core.embeddings import BaseEmbedding
-from llama_index.embeddings.mlflow.providers import CloudProvider
+from llama_index.embeddings.mlflow.providers import MLPlatform
 from mlflow.deployments import (
     get_deploy_client,
     BaseDeploymentClient,
@@ -24,6 +24,7 @@ class MLFlowEmbedding(BaseEmbedding):
 
     Args:
         endpoint (str): The name or ID of the deployed MLflow model endpoint.
+        client (Optional[BaseDeploymentClient]): An existing MLflow deployment client.
         client_name (Optional[str]): The cloud provider name, e.g., "databricks".
         input_key (str):  The key in the input dictionary for the text to embed. Defaults to "input".
         output_key (str): The key in the output dictionary containing the embedding. Defaults to "embedding".
@@ -34,6 +35,9 @@ class MLFlowEmbedding(BaseEmbedding):
     """
 
     endpoint: str = Field(description="The deployed MLflow model endpoint name/ID")
+    client: Optional[BaseDeploymentClient] = Field(
+        default=None, description="An existing MLflow deployment client."
+    )
     client_name: Optional[str] = Field(
         default=None, description="The cloud provider name, e.g., databricks"
     )
@@ -47,11 +51,12 @@ class MLFlowEmbedding(BaseEmbedding):
         default_factory=dict, description="Additional kwargs"
     )
 
-    _client: Optional[BaseDeploymentClient] = PrivateAttr(default=None)
+    # client: Optional[BaseDeploymentClient] = PrivateAttr(default=None)
 
     def __init__(
         self,
         endpoint: str,
+        client: Optional[BaseDeploymentClient],
         client_name: Optional[str],
         input_key: str = "input",
         output_key: str = "embedding",
@@ -63,6 +68,7 @@ class MLFlowEmbedding(BaseEmbedding):
 
         super().__init__(
             endpoint=endpoint,
+            client=client,
             client_name=client_name,
             input_key=input_key,
             output_key=output_key,
@@ -71,25 +77,22 @@ class MLFlowEmbedding(BaseEmbedding):
             **kwargs,
         )
         self.endpoint = endpoint
+        self.client = client or self._get_client()
         self.client_name = client_name
         self.input_key = input_key
         self.output_key = output_key
         self.max_retries = max_retries
         self.timeout = timeout
-        self._client = self._get_client()
 
     def _get_client(self) -> BaseDeploymentClient:
         """Instantiate and return an MLflow client if not already set."""
-        if not self._client:
-            logger.info(
-                f"Creating MLflow client for cloud provider: {self.client_name}"
-            )
-            if self.client_name == CloudProvider.DATABRICKS.value:
-                self._client = self._get_databricks_client()
-            else:
-                logger.error(f"Unsupported Cloud Provider: {self.client_name}")
-                raise ValueError(f"Unsupported Cloud Provider: {self.client_name}")
-        return self._client
+        logger.info(f"Creating MLflow client for cloud provider: {self.client_name}")
+        if self.client_name == MLPlatform.DATABRICKS.value:
+            self.client = self._get_databricks_client()
+        else:
+            logger.error(f"Unsupported Cloud Provider: {self.client_name}")
+            raise ValueError(f"Unsupported Cloud Provider: {self.client_name}")
+        return self.client
 
     def _get_databricks_client(self) -> DatabricksDeploymentClient:
         """Return a Databricks client."""
@@ -121,12 +124,11 @@ class MLFlowEmbedding(BaseEmbedding):
     def _get_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Helper method to get embeddings for a list of texts."""
         logger.info(f"Sending request to MLFlow model endpoint: {self.endpoint}")
-        client = self._get_client()
 
         # Attempt the request with retries for robustness
         for attempt in range(self.max_retries):
             try:
-                response = client.predict(
+                response = self.client.predict(
                     endpoint=self.endpoint, inputs={self.input_key: texts}
                 ).data
 

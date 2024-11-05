@@ -10,7 +10,7 @@ except ImportError:
     MLFlowEmbedding = None
 
 # Get environment variables for Databricks-hosted MLflow
-MODEL_NAME = os.getenv("MLFLOW_MODEL_NAME")
+MLFLOW_ENDPOINT = os.getenv("MLFLOW_ENDPOINT")
 DATABRICKS_HOST = os.getenv("DATABRICKS_HOST")
 DATABRICKS_TOKEN = os.getenv("DATABRICKS_TOKEN")
 
@@ -20,10 +20,12 @@ def mlflow_embedding():
     """Fixture to initialize MLFlowEmbedding for Databricks environment."""
     assert DATABRICKS_HOST, "DATABRICKS_HOST is required for Databricks-hosted MLflow"
     assert DATABRICKS_TOKEN, "DATABRICKS_TOKEN is required for Databricks-hosted MLflow"
-    assert MODEL_NAME, "MLFLOW_MODEL_NAME is required for the MLflow model name"
+    assert MLFLOW_ENDPOINT, "MLFLOW_ENDPOINT is required for the MLflow model name"
 
     # Initialize MLFlowEmbedding with Databricks client
-    return MLFlowEmbedding(endpoint=MODEL_NAME, client_name="databricks")
+    return MLFlowEmbedding(
+        endpoint=MLFLOW_ENDPOINT, client=None, client_name="databricks"
+    )
 
 
 @pytest.mark.skipif(
@@ -43,5 +45,5 @@ def test_completion(mlflow_embedding):
         assert len(embeddings) > 0, "Embeddings should not be empty."
     except Exception as e:
         pytest.skip(
-            f"Skipping test: Unable to access model {MODEL_NAME} at endpoint {DATABRICKS_HOST}. Error: {e}"
+            f"Skipping test: Unable to access model {MLFLOW_ENDPOINT} at endpoint {DATABRICKS_HOST}. Error: {e}"
         )
