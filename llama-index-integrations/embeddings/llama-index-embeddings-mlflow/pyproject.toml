@@ -36,6 +36,7 @@ version = "0.2.1"
 python = ">=3.8.1,<4.0"
 llama-index-core = "^0.11.0"
 mlflow = "^2.16.2"
+python-dotenv = "^1.0.1"
 
 [tool.poetry.group.dev.dependencies]
 black = {extras = ["jupyter"], version = "<=23.9.1,>=23.7.0"}
@@ -47,7 +48,6 @@ pre-commit = "3.2.0"
 pylint = "2.15.10"
 pytest = "7.2.1"
 pytest-mock = "3.11.1"
-python-dotenv = "^1.0.1"
 ruff = "0.0.292"
 tree-sitter-languages = "^1.8.0"
 types-Deprecated = ">=0.1.0"
